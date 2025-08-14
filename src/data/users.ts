@@ -10,6 +10,7 @@ export interface User {
     email: string;
     userType: string;
     availability: string;
+    status: string; 
   }
   
   export const sampleUsers: User[] = [
@@ -23,7 +24,8 @@ export interface User {
       contact: "1234567890",
       email: "john.doe@example.com",
       userType: "Admin",
-      availability: "Active",
+      availability: "Yes",
+      status: "Active", 
     },
     {
       id: 2,
@@ -31,11 +33,12 @@ export interface User {
       employeeName: "Jane Smith",
       username: "janesmith",
       password: "password456",
-      department: "HR",
+      department: "HR & Finance",
       contact: "0987654321",
       email: "jane.smith@example.com",
       userType: "User",
-      availability: "Inactive",
+      availability: "No",
+      status: "Non", 
     },
     {
       id: 3,
@@ -43,10 +46,11 @@ export interface User {
       employeeName: "Alice Johnson",
       username: "alicej",
       password: "password789",
-      department: "Finance",
+      department: "Maintenance",
       contact: "1122334455",
       email: "alice.johnson@example.com",
-      userType: "Manager",
-      availability: "Active",
+      userType: "Super Admin",
+      availability: "Yes",
+      status: "Active", 
     },
   ];

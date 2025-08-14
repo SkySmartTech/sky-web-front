@@ -12,10 +12,10 @@ import {
   InputAdornment,
   Zoom
 } from "@mui/material";
-import { 
-  AccountCircle, 
-  Info, 
-  Visibility, 
+import {
+  AccountCircle,
+  Info,
+  Visibility,
   VisibilityOff,
   Lock
 } from "@mui/icons-material";
@@ -117,7 +117,7 @@ const LoginForm = ({ onForgotPasswordClick }: LoginFormProps) => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <Typography variant="h6" fontWeight="bold" mt={1} sx={{ textAlign: "left" }}>
+          <Typography variant="h6" fontWeight="bold" mt={1} sx={{ textAlign: "left", marginTop: "10px" }}>
             Sign In
           </Typography>
         </motion.div>
@@ -143,16 +143,15 @@ const LoginForm = ({ onForgotPasswordClick }: LoginFormProps) => {
             })}
             error={!!errors.username}
             helperText={errors.username?.message}
-            sx={{ mb: 2 }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "10px",
+                height: "45px"
+              }
+            }}
             autoComplete="username"
             autoFocus
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <AccountCircle color={errors.username ? "error" : "action"} />
-                </InputAdornment>
-              ),
-            }}
+
           />
         </motion.div>
 
@@ -176,16 +175,16 @@ const LoginForm = ({ onForgotPasswordClick }: LoginFormProps) => {
             })}
             error={!!errors.password}
             helperText={errors.password?.message}
-            sx={{ mb: 2 }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "10px",
+                height: "45px"
+              }
+            }}
             autoComplete="current-password"
             onFocus={() => setPasswordFocused(true)}
             onBlur={() => setPasswordFocused(false)}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Lock color={errors.password ? "error" : passwordFocused ? "primary" : "action"} />
-                </InputAdornment>
-              ),
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
@@ -245,8 +244,8 @@ const LoginForm = ({ onForgotPasswordClick }: LoginFormProps) => {
             color="primary"
             fullWidth
             disabled={isPending}
-            sx={{ 
-              mb: 2, 
+            sx={{
+              mb: 2,
               height: 48,
               fontSize: '1rem',
               fontWeight: 'bold',
@@ -276,37 +275,39 @@ const LoginForm = ({ onForgotPasswordClick }: LoginFormProps) => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7, duration: 0.5 }}
         >
-          <Box sx={{ 
-            display: "flex", 
+          <Box sx={{
+            display: "flex",
             justifyContent: "space-between",
             alignItems: 'center',
             mt: 2
           }}>
             <Button
-              startIcon={<Info />}
+              startIcon={<Lock />}
               onClick={onForgotPasswordClick}
-              sx={{ 
+              sx={{     
                 textTransform: "none",
+                fontWeight: "bold",
                 color: 'text.secondary',
                 '&:hover': {
                   color: 'primary.main'
                 }
               }}
             >
-              Forgot password?
+              Forgot password
             </Button>
             <Link to="/register" style={{ textDecoration: 'none' }}>
-              <Button 
-                startIcon={<AccountCircle />} 
-                sx={{ 
+              <Button
+                startIcon={<AccountCircle />}
+                sx={{
                   textTransform: "none",
-                  color: 'primary.main',
+                  fontWeight: "bold",
+                  color: 'text.secondary',
                   '&:hover': {
                     color: 'primary.dark'
                   }
                 }}
               >
-                Create account
+                Sign Up to System
               </Button>
             </Link>
           </Box>

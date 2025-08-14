@@ -15,6 +15,7 @@ export const userSchema = z.object({
   department: z.string().min(1, "Department is required"),
   contact: z.string().optional(),
   email: z.string().email("Invalid email address")
+  
 });
 
 export type User = z.infer<typeof userSchema>;

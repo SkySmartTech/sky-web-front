@@ -2,9 +2,14 @@ import { useState } from "react";
 import { Box, Stack, Card } from "@mui/material";
 import LoginForm from "./LoginForm";
 import ForgotPasswordDialog from "./ForgotPasswordDialog"; 
+import { useTheme } from "@mui/material/styles";
+import { useSnackbar } from "notistack";
 
 const Login = () => {
   const [openForgotPasswordDialog, setOpenForgotPasswordDialog] = useState(false); 
+
+    const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
 
   return (
     <Stack
@@ -13,7 +18,6 @@ const Login = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundImage: 'url("/images/l1.png")',
         backgroundSize: "768px 1000px",
         backgroundPosition: "left",
         backgroundRepeat: "no-repeat",
@@ -25,12 +29,12 @@ const Login = () => {
         <Box
           sx={{
             flex: 1,
-            backgroundImage: 'url("/images/l1.png")',
+            backgroundImage: 'url("/images/b.jpg")',
             backgroundSize: "cover",
             backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
             borderTopLeftRadius: "25px",
             borderBottomLeftRadius: "25px",
-            margin: "12px",
             position: "relative",
           }}
         >
@@ -40,6 +44,8 @@ const Login = () => {
               position: "absolute",
               top: 20,
               left: 20,
+              backgroundColor: "primary.contrastText",
+              color: theme.palette.text.primary,
               padding: "8px 16px",
               borderRadius: "10px",
               fontWeight: "bold",

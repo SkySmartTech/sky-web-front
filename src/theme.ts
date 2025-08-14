@@ -8,6 +8,7 @@ const customColors = {
     light: '#42a5f5',
     dark: '#1565c0',
     contrastText: '#ffffff',
+    
   },
   secondary: {
     main: '#9c27b0',
