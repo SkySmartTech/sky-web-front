@@ -26,6 +26,7 @@ import {
   DashboardDataResponse,
 } from "../../api/dashboardApi";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData[]>(fallbackDashboardData);
@@ -108,7 +109,7 @@ const Dashboard = () => {
       <CssBaseline />
       <Sidebar open={sidebarOpen || hovered} setOpen={setSidebarOpen} />
 
-      <Box component="main" sx={{ flexGrow: 1 }}>
+      <Box component="main" sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <AppBar
           position="static"
           sx={{
@@ -126,7 +127,7 @@ const Dashboard = () => {
           />
         </AppBar>
 
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 2, flexGrow: 1, overflowY: "auto" }}>
           <Box sx={{ display: "block", flexDirection: "inherit", alignItems: "flex-end", mr: 0.2 }}>
             <Typography variant="body2" sx={{ height: 10 }}>
               Select Line
@@ -275,44 +276,46 @@ const Dashboard = () => {
                   );
                 })}
               </Box>
+
+              <Stack
+                direction="row"
+                flexWrap="initial"
+                spacing={2}
+                useFlexGap
+                sx={{ width: '100%', mt: 3 }}
+              >
+                {Object.entries(hourlyData).map(([hour, value]) => (
+                  <Box
+                    key={`hour-${hour}`}
+                    sx={{
+                      width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(16.66% - 16px)' },
+                    }}
+                  >
+                    <Card
+                      sx={{
+                        p: 2,
+                        textAlign: 'center',
+                        borderRadius: '8px',
+                        boxShadow: 3,
+                        bgcolor: parseInt(hour) < 5 ? '#00BA57' : '#78B3CE',
+                        transition: 'transform 0.3s',
+                        '&:hover': { transform: 'translateY(-5px)' },
+                      }}
+                    >
+                      <Typography variant="subtitle2" color="textSecondary">
+                        HOUR: {hour}
+                      </Typography>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="h5">{value}</Typography>
+                    </Card>
+                  </Box>
+                ))}
+              </Stack>
             </>
           )}
-
-          <Stack
-            direction="row"
-            flexWrap="initial"
-            spacing={2}
-            useFlexGap
-            sx={{ width: '100%', mt: 3 }}
-          >
-            {Object.entries(hourlyData).map(([hour, value]) => (
-              <Box
-                key={`hour-${hour}`}
-                sx={{
-                  width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(16.66% - 16px)' },
-                }}
-              >
-                <Card
-                  sx={{
-                    p: 2,
-                    textAlign: 'center',
-                    borderRadius: '8px',
-                    boxShadow: 3,
-                    bgcolor: parseInt(hour) < 5 ? '#00BA57' : '#78B3CE',
-                    transition: 'transform 0.3s',
-                    '&:hover': { transform: 'translateY(-5px)' },
-                  }}
-                >
-                  <Typography variant="subtitle2" color="textSecondary">
-                    HOUR: {hour}
-                  </Typography>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="h5">{value}</Typography>
-                </Card>
-              </Box>
-            ))}
-          </Stack>
         </Box>
+
+     <Footer/>
       </Box>
     </Box>
   );
