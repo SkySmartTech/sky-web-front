@@ -12,7 +12,7 @@ import {
   useTheme,
   FormControl,
   Select,
-  MenuItem
+  MenuItem,
 } from "@mui/material";
 import Sidebar from "../../components/Sidebar";
 import { useCustomTheme } from "../../context/ThemeContext";
@@ -23,14 +23,15 @@ import {
   fetchHourlyData,
   mapDashboardData,
   fallbackDashboardData,
-  DashboardDataResponse
+  DashboardDataResponse,
 } from "../../api/dashboardApi";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData[]>(fallbackDashboardData);
   const [hourlyData, setHourlyData] = useState<Record<string, number>>({
-    '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0
+    '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0,
   });
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -40,12 +41,12 @@ const Dashboard = () => {
   const theme = useTheme();
   useCustomTheme();
 
-  // Fetch all lines on component mount
   useEffect(() => {
     const fetchLines = async () => {
       try {
         const linesData = await fetchAllLines();
-        setLines(linesData);
+        console.log("Fetched lines:", linesData);
+        setLines(Array.isArray(linesData) ? linesData : []);
         if (linesData.length > 0) {
           setSelectedLine(linesData[0].lineNo);
         }
@@ -57,7 +58,6 @@ const Dashboard = () => {
     fetchLines();
   }, []);
 
-  // Fetch data when selected line changes
   useEffect(() => {
     if (!selectedLine) return;
 
@@ -66,9 +66,9 @@ const Dashboard = () => {
         setLoading(true);
         const [lineData, hourlySuccess] = await Promise.all([
           fetchLineData(selectedLine),
-          fetchHourlyData(selectedLine)
+          fetchHourlyData(selectedLine),
         ]);
-        
+
         const mappedData = mapDashboardData(lineData);
         setDashboardData(mappedData);
         setHourlyData(hourlySuccess);
@@ -76,7 +76,7 @@ const Dashboard = () => {
         console.error("Error fetching dashboard data:", error);
         setDashboardData(fallbackDashboardData);
         setHourlyData({
-          '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0
+          '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0,
         });
       } finally {
         setLoading(false);
@@ -90,7 +90,7 @@ const Dashboard = () => {
 
   const generateDashboardInfo = (): string[] => {
     if (!selectedLine || lines.length === 0) return [];
-    const line = lines.find(l => l.lineNo === selectedLine);
+    const line = lines.find((l) => l.lineNo === selectedLine);
     if (!line) return [];
 
     return [
@@ -100,7 +100,7 @@ const Dashboard = () => {
       `Gauge: ${line.gg}`,
       `SMV: ${line.smv}`,
       `Carder: ${line.availableCarder}`,
-      `WH/RH: ${line.actualWH}`
+      `WH/RH: ${line.actualWH}`,
     ];
   };
 
@@ -109,7 +109,7 @@ const Dashboard = () => {
       <CssBaseline />
       <Sidebar open={sidebarOpen || hovered} setOpen={setSidebarOpen} />
 
-      <Box component="main" sx={{ flexGrow: 1 }}>
+      <Box component="main" sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <AppBar
           position="static"
           sx={{
@@ -117,7 +117,7 @@ const Dashboard = () => {
             boxShadow: 'none',
             borderBottom: `1px solid ${theme.palette.divider}`,
             zIndex: theme.zIndex.drawer + 1,
-            color: theme.palette.text.primary
+            color: theme.palette.text.primary,
           }}
         >
           <Navbar
@@ -127,7 +127,7 @@ const Dashboard = () => {
           />
         </AppBar>
 
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ p: 2, flexGrow: 1, overflowY: "auto" }}>
           <Box sx={{ display: "block", flexDirection: "inherit", alignItems: "flex-end", mr: 0.2 }}>
             <Typography variant="body2" sx={{ height: 10 }}>
               Select Line
@@ -137,13 +137,19 @@ const Dashboard = () => {
                 value={selectedLine}
                 onChange={(e) => setSelectedLine(e.target.value)}
                 displayEmpty
-                disabled={loading}
+                disabled={loading || lines.length === 0}
               >
-                {lines.map((line) => (
-                  <MenuItem key={`line-${line.lineNo}`} value={line.lineNo}>
-                    {line.lineNo}
+                {lines.length === 0 ? (
+                  <MenuItem value="" disabled>
+                    No lines available
                   </MenuItem>
-                ))}
+                ) : (
+                  lines.map((line) => (
+                    <MenuItem key={`line-${line.lineNo}`} value={line.lineNo}>
+                      {line.lineNo}
+                    </MenuItem>
+                  ))
+                )}
               </Select>
             </FormControl>
           </Box>
@@ -164,7 +170,7 @@ const Dashboard = () => {
                       sx={{
                         flexWrap: "nowrap",
                         overflowX: "auto",
-                        py: 1
+                        py: 1,
                       }}
                     >
                       {generateDashboardInfo().map((info, index) => (
@@ -183,7 +189,7 @@ const Dashboard = () => {
                 gridTemplateRows: 'repeat(4, 1fr)',
                 gap: 2,
                 p: 3,
-                height: '600px'
+                height: '600px',
               }}>
                 {dashboardData.map((item, index) => {
                   const gridStyles: Record<number, { gridColumn: string; gridRow: string }> = {
@@ -198,7 +204,7 @@ const Dashboard = () => {
                     8: { gridColumn: '1', gridRow: '4' },
                     9: { gridColumn: '2', gridRow: '4' },
                     10: { gridColumn: '3', gridRow: '3 / span 2' },
-                    11: { gridColumn: '4', gridRow: '3 / span 2' }
+                    11: { gridColumn: '4', gridRow: '3 / span 2' },
                   };
 
                   const currentStyles = gridStyles[index];
@@ -209,7 +215,7 @@ const Dashboard = () => {
                       key={`card-${item.id}`}
                       sx={{
                         ...currentStyles,
-                        minHeight: 0
+                        minHeight: 0,
                       }}
                     >
                       <Card
@@ -270,44 +276,46 @@ const Dashboard = () => {
                   );
                 })}
               </Box>
+
+              <Stack
+                direction="row"
+                flexWrap="initial"
+                spacing={2}
+                useFlexGap
+                sx={{ width: '100%', mt: 3 }}
+              >
+                {Object.entries(hourlyData).map(([hour, value]) => (
+                  <Box
+                    key={`hour-${hour}`}
+                    sx={{
+                      width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(16.66% - 16px)' },
+                    }}
+                  >
+                    <Card
+                      sx={{
+                        p: 2,
+                        textAlign: 'center',
+                        borderRadius: '8px',
+                        boxShadow: 3,
+                        bgcolor: parseInt(hour) < 5 ? '#00BA57' : '#78B3CE',
+                        transition: 'transform 0.3s',
+                        '&:hover': { transform: 'translateY(-5px)' },
+                      }}
+                    >
+                      <Typography variant="subtitle2" color="textSecondary">
+                        HOUR: {hour}
+                      </Typography>
+                      <Divider sx={{ my: 1 }} />
+                      <Typography variant="h5">{value}</Typography>
+                    </Card>
+                  </Box>
+                ))}
+              </Stack>
             </>
           )}
-
-          <Stack
-            direction="row"
-            flexWrap="initial"
-            spacing={2}
-            useFlexGap
-            sx={{ width: '100%', mt: 3 }}
-          >
-            {Object.entries(hourlyData).map(([hour, value]) => (
-              <Box
-                key={`hour-${hour}`}
-                sx={{
-                  width: { xs: '100%', sm: 'calc(50% - 16px)', md: 'calc(16.66% - 16px)' },
-                }}
-              >
-                <Card
-                  sx={{
-                    p: 2,
-                    textAlign: 'center',
-                    borderRadius: '8px',
-                    boxShadow: 3,
-                    bgcolor: parseInt(hour) < 5 ? '#00BA57' : '#78B3CE',
-                    transition: 'transform 0.3s',
-                    '&:hover': { transform: 'translateY(-5px)' }
-                  }}
-                >
-                  <Typography variant="subtitle2" color="textSecondary">
-                    HOUR: {hour}
-                  </Typography>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="h5">{value}</Typography>
-                </Card>
-              </Box>
-            ))}
-          </Stack>
         </Box>
+
+     <Footer/>
       </Box>
     </Box>
   );

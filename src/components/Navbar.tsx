@@ -8,13 +8,16 @@ import {
   Menu,
   MenuItem,
   Button,
-  Divider
+  Divider,
+  InputBase,
+  Avatar
 } from "@mui/material";
 import {
   Menu as MenuIcon,
   Notifications as NotificationsIcon,
   Fullscreen as FullscreenIcon,
-  AccountCircle as AccountCircleIcon
+  Search as SearchIcon,
+  ArrowDropDown as ArrowDropDownIcon
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useCustomTheme } from "../context/ThemeContext";
@@ -77,40 +80,71 @@ const Navbar = ({ title, sidebarOpen, setSidebarOpen }: NavbarProps) => {
   };
 
   return (
-    <Toolbar>
-      <IconButton
-        edge="start"
-        color="inherit"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        sx={{ mr: 2 }}
-      >
-        <MenuIcon />
-      </IconButton>
+    <Toolbar sx={{ justifyContent: "space-between" }}>
+      {/* Left: Sidebar toggle + title */}
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <IconButton
+          edge="start"
+          color="inherit"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          sx={{ mr: 2 }}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Typography variant="h6" noWrap fontWeight={600}>
+          {title}
+        </Typography>
+      </Box>
 
-      <Typography
-        variant="h6"
-        noWrap
-        component="div"
+      {/* Center: Search bar */}
+      <Box
         sx={{
           flexGrow: 1,
-          fontWeight: 600
+          display: "flex",
+          justifyContent: "center",
+          mx: 2
         }}
       >
-        {title}
-      </Typography>
-
-      {/* Icons */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-        {/* Dark mode toggle */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
-          <AnimatedSwitch
-            checked={mode === 'dark'}
-            onChange={toggleTheme}
-            inputProps={{ 'aria-label': 'dark mode toggle' }}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.08)",
+            px: 1.5,
+            py: 0.5,
+            borderRadius: "20px",
+            width: "100%",
+            maxWidth: 250
+          }}
+        >
+          <InputBase
+            placeholder="Search..."
+            sx={{ flex: 1, fontSize: 14 }}
+            inputProps={{ "aria-label": "search" }}
           />
+          <SearchIcon sx={{ fontSize: 18, color: "gray" }} />
         </Box>
+      </Box>
 
-        {/* Notifications dropdown */}
+      {/* Right: Icons */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {/* Dark/Light mode toggle */}
+        <AnimatedSwitch
+          checked={mode === "dark"}
+          onChange={toggleTheme}
+          inputProps={{ "aria-label": "dark mode toggle" }}
+        />
+
+        {/* Country flag */}
+        <IconButton>
+          <img
+            src="https://flagcdn.com/w20/lk.png" // Example: Sri Lanka flag (20px)
+            alt="Country flag"
+            style={{ width: 24, height: 16, borderRadius: 2 }}
+          />
+        </IconButton>
+
+        {/* Notifications */}
         <IconButton onClick={handleNotificationMenuOpen}>
           <Badge badgeContent={notificationCount} color="error">
             <NotificationsIcon />
@@ -121,22 +155,24 @@ const Navbar = ({ title, sidebarOpen, setSidebarOpen }: NavbarProps) => {
           open={Boolean(notificationAnchorEl)}
           onClose={handleNotificationMenuClose}
           anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
+            vertical: "bottom",
+            horizontal: "right"
           }}
           transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
+            vertical: "top",
+            horizontal: "right"
           }}
           sx={{
-            '& .MuiPaper-root': {
+            "& .MuiPaper-root": {
               width: 300,
               maxHeight: 400
             }
           }}
         >
           <MenuItem disabled>
-            <Typography variant="body2">You have {notificationCount} new notifications</Typography>
+            <Typography variant="body2">
+              You have {notificationCount} new notifications
+            </Typography>
           </MenuItem>
           <Divider />
           <MenuItem>
@@ -153,25 +189,42 @@ const Navbar = ({ title, sidebarOpen, setSidebarOpen }: NavbarProps) => {
           </MenuItem>
         </Menu>
 
+        {/* Fullscreen */}
         <IconButton onClick={toggleFullscreen}>
           <FullscreenIcon />
         </IconButton>
 
-        {/* Account dropdown menu */}
-        <IconButton onClick={handleAccountMenuOpen}>
-          <AccountCircleIcon />
-        </IconButton>
+        {/* Account dropdown (avatar + name + arrow) */}
+        <Box
+          onClick={handleAccountMenuOpen}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            px: 1,
+            py: 0.5,
+            borderRadius: 20,
+            cursor: "pointer",
+            "&:hover": { backgroundColor: "rgba(0,0,0,0.05)" }
+          }}
+        >
+          <Avatar sx={{ width: 28, height: 28, mr: 1 }}>A</Avatar>
+          <Typography variant="body2" fontWeight={600}>
+            Admin
+          </Typography>
+          <ArrowDropDownIcon fontSize="small" />
+        </Box>
+
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
           onClose={handleAccountMenuClose}
           anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
+            vertical: "bottom",
+            horizontal: "right",
           }}
           transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
+            vertical: "top",
+            horizontal: "right",
           }}
         >
           <MenuItem onClick={handleProfileClick}>User Profile</MenuItem>

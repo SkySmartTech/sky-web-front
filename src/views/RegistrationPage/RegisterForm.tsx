@@ -43,7 +43,7 @@ const statusOptions = ["Active", "Non"];
 
 interface FormData extends Omit<User, 'availability'> {
   availability: string;
-  status: boolean;
+  status: string;
   confirmPassword: string;
   userType: string;
 }
@@ -62,11 +62,18 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
-    department: "",
+      department: "",
+      userType: "",
+      availability: "",
+      status: ""
     }
   });
 
   const password = watch("password");
+  const department = watch("department");
+  const userType = watch("userType");
+  const availability = watch("availability");
+  const status = watch("status");
 
   const { mutate: registerMutation, isPending } = useMutation({
     mutationFn: registerUser,
@@ -82,7 +89,7 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
   const onSubmit = (data: FormData) => {
     const userData: any = {
       ...data,
-      availability: data.availability === "Available",
+      availability: data.availability === "Yes",
       password_confirmation: data.confirmPassword,
     };
     registerMutation(userData);
@@ -101,7 +108,7 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
   };
 
   return (
-    <Box sx={{ width: "90%", maxWidth: 500, height: "auto", maxHeight: 570, overflowY: "auto" }}>
+    <Box sx={{ width: "90%", maxWidth: 500, height: "auto", maxHeight: 570 }}>
 
       <CardContent sx={{ textAlign: "center", p: 1 }}>
         <motion.div
@@ -132,9 +139,8 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
           >
             <Stack direction="row" spacing={2}>
               <TextField
-                label=""
+                label="ID"
                 fullWidth
-                placeholder="ID"
                 variant="outlined"
                 {...register("id", { required: "ID is required" })}
                 error={!!errors.id}
@@ -147,9 +153,9 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                 }}
               />
               <TextField
-                label=""
+                label="EPF"
                 fullWidth
-                placeholder="EPF"
+                placeholder=""
                 variant="outlined"
                 {...register("epf", { required: "EPF is required" })}
                 error={!!errors.epf}
@@ -170,19 +176,18 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
             transition={{ delay: 0.4, duration: 0.5 }}
           >
             <TextField
-              label=""             
+              label="Name"
               fullWidth
-              placeholder="Name"
               variant="outlined"
               {...register("employeeName", { required: "Name is required" })}
               error={!!errors.employeeName}
               helperText={errors.employeeName?.message}
               sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "10px",
-                    height: "45px"
-                  }
-                }}
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "10px",
+                  height: "45px"
+                }
+              }}
             />
           </motion.div>
 
@@ -194,9 +199,8 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
 
             <Stack direction="row" spacing={2}>
               <TextField
-                label=""
+                label="Username"
                 fullWidth
-                placeholder="Username"
                 variant="outlined"
                 {...register("username", {
                   required: "Username is required",
@@ -217,10 +221,9 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
 
 
               <TextField
-                label=""
+                label="Password"
                 type={showPassword ? "text" : "password"}
                 fullWidth
-                placeholder="Password"
                 variant="outlined"
                 {...register("password", {
                   required: "Password is required",
@@ -333,22 +336,26 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
             <Stack direction="row" spacing={2}>
               <TextField
                 select
-                label=""
+                label="Department"
                 fullWidth
-                placeholder="Department"
                 variant="outlined"
-                {...register("department", { required: "Department is required" })}
+                value={department || ""}
+                {...register("department", {
+                  required: "Department is required",
+                  })}
                 error={!!errors.department}
                 helperText={errors.department?.message}
-                
+                InputLabelProps={{
+                  shrink: !!department, 
+                }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
                     height: "45px"
-                  }
+                  },
+
                 }}
               >
-                <MenuItem value="" disabled>Department</MenuItem>
                 {departments.map((dept) => (
                   <MenuItem key={dept} value={dept}>
                     {dept}
@@ -356,9 +363,8 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                 ))}
               </TextField>
               <TextField
-                label=""
+                label="Contact"
                 fullWidth
-                placeholder="Contact"
                 variant="outlined"
                 {...register("contact")}
                 error={!!errors.contact}
@@ -380,10 +386,9 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
           >
             <Stack direction="row" spacing={2}>
               <TextField
-                label=""
+                label="Email"
                 type="email"
                 fullWidth
-                placeholder="Email"
                 variant="outlined"
                 {...register("email", {
                   required: "Email is required",
@@ -394,7 +399,7 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                 })}
                 error={!!errors.email}
                 helperText={errors.email?.message}
-                
+
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "10px",
@@ -404,18 +409,15 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
               />
               <TextField
                 select
-                label=""
+                label="User Type"
                 fullWidth
                 variant="outlined"
+                value={userType || ""}
                 {...register("userType", { required: "User Type is required" })}
                 error={!!errors.userType}
                 helperText={errors.userType?.message}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Person color={errors.userType ? "error" : "action"} />
-                    </InputAdornment>
-                  ),
+                InputLabelProps={{
+                  shrink: !!userType, 
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -444,15 +446,12 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                 label="Availability"
                 fullWidth
                 variant="outlined"
+                value={availability || ""}
                 {...register("availability", { required: "Availability is required" })}
                 error={!!errors.availability}
                 helperText={errors.availability?.message}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Work color={errors.availability ? "error" : "action"} />
-                    </InputAdornment>
-                  ),
+                InputLabelProps={{
+                  shrink: !!availability, 
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -472,15 +471,12 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                 label="Status"
                 fullWidth
                 variant="outlined"
+                value={status || ""}
                 {...register("status", { required: "Status is required" })}
                 error={!!errors.status}
                 helperText={errors.status?.message}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Work color={errors.status ? "error" : "action"} />
-                    </InputAdornment>
-                  ),
+                InputLabelProps={{
+                  shrink: !!status, 
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
@@ -560,13 +556,13 @@ const RegisterForm = ({ onSuccess, onError }: RegisterFormProps) => {
                 startIcon={<AccountCircle />}
                 sx={{
                   textTransform: "none",
-                  color: "primary.main",
+                  color: "black",
                   '&:hover': {
                     color: 'primary.dark'
                   }
                 }}
               >
-                 Sign in To System
+                Sign in To System
               </Button>
             </Link>
           </Box>
