@@ -11,41 +11,20 @@ import {
   CssBaseline,
   Snackbar,
   Alert,
-  CircularProgress,
   useTheme,
-  IconButton,
-  Tooltip,
-  InputAdornment
 } from "@mui/material";
 import {
-  DataGrid,
-  GridToolbarContainer,
-  GridToolbarColumnsButton,
-  GridToolbarFilterButton,
-  GridToolbarDensitySelector,
-  GridToolbarExport,
   GridColDef,
-  GridActionsCellItem,
   GridRowId,
-  GridRowParams
 } from "@mui/x-data-grid";
-import {
-  PictureAsPdf as PdfIcon,
-  Print as PrintIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Refresh as RefreshIcon,
-  Search as SearchIcon,
-  Clear as ClearIcon
-} from "@mui/icons-material";
+
 import Sidebar from "../../../components/Sidebar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCustomTheme } from "../../../context/ThemeContext";
 import {
   User,
-  departments,
-  userTypes,
-  availabilityOptions
+  UserRole,
+  userRoles
 } from "../../../types/userManagementTypes";
 import {
   fetchUsers,
@@ -55,23 +34,19 @@ import {
   searchUsers
 } from "../../../api/userManagementApi";
 import Navbar from "../../../components/Navbar";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import debounce from "lodash/debounce";
+import UserManagementTable from "./UserManagementTable";
 
 const UserManagement: React.FC = () => {
-  const [form, setForm] = useState<Omit<User, 'id'> & { id?: number }>({
-    epf: "",
-    employeeName: "",
-    username: "",
-    department: "",
-    contact: "",
+  const [form, setForm] = useState<User>({
+    id: "",
+    name: "",
     email: "",
-    userType: "",
-    availability: false,
-    password: ""
+    password: "",
+    user_role: null,
+    user_name: ""
   });
-  const [editId, setEditId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hovered] = useState(false);
   const [snackbar, setSnackbar] = useState({
@@ -83,6 +58,14 @@ const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchMode] = useState<"client" | "api">("client");
   const [searchedData, setSearchedData] = useState<User[]>([]);
+  const [formErrors, setFormErrors] = useState<{
+    id?: string;
+    name?: string;
+    email?: string;
+    password?: string;
+    user_role?: string;
+    user_name?: string;
+  }>({});
   const theme = useTheme();
   const dataGridRef = useRef<any>(null);
   useCustomTheme();
@@ -92,7 +75,7 @@ const UserManagement: React.FC = () => {
   // Fetch active users
   const { data: users = [], isLoading: isDataLoading, refetch } = useQuery<User[]>({
     queryKey: ["users"],
-    queryFn: fetchUsers, 
+    queryFn: fetchUsers,
   });
 
   // Search users API call
@@ -122,7 +105,7 @@ const UserManagement: React.FC = () => {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: (userData: User) => updateUser(userData.id as number, userData),
+    mutationFn: (userData: User) => updateUser(userData.id, userData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       showSnackbar("User updated successfully!", "success");
@@ -143,10 +126,10 @@ const UserManagement: React.FC = () => {
     mutationFn: deactivateUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      showSnackbar("User deactivated successfully!", "success");
+      showSnackbar("User deleted successfully!", "success");
     },
     onError: (error: any) => {
-      showSnackbar(error.response?.data?.message || "Failed to deactivate user", "error");
+      showSnackbar(error.response?.data?.message || "Failed to delete user", "error");
     }
   });
 
@@ -205,28 +188,73 @@ const UserManagement: React.FC = () => {
 
   const handleSelectChange = (e: React.ChangeEvent<{ value: unknown }>, field: keyof User) => {
     const value = e.target.value;
-    if (field === 'availability') {
-      setForm(prev => ({
-        ...prev,
-        [field]: value === 'true' || value === true
-      }));
-    } else {
-      setForm(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
+    setForm(prev => ({
+      ...prev,
+      [field]: value as UserRole
+    }));
+  };
+
+  // Utility function to validate email format
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Utility function to validate password
+  const isValidPassword = (password: string): boolean => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
   };
 
   const handleSave = () => {
-    if (!form.epf || !form.employeeName || !form.username || (editId === null && !form.password)) {
-      showSnackbar("Please fill all required fields!", "error");
+    const errors: {
+      id?: string;
+      name?: string;
+      email?: string;
+      password?: string;
+      user_role?: string;
+      user_name?: string;
+    } = {};
+
+    if (!form.id) errors.id = "ID is required";
+    if (!form.name) errors.name = "Name is required";
+    if (!form.user_name) errors.user_name = "Username is required";
+
+    if (!form.email) {
+      errors.email = "Email is required";
+    } else if (!isValidEmail(form.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (editId === null && !form.password) {
+      errors.password = "Password is required";
+    } else if (form.password && !isValidPassword(form.password)) {
+      errors.password =
+        "Password must be at least 8 characters long and include an uppercase letter, lowercase letter, number, and special character";
+    }
+
+    const latestUsers = queryClient.getQueryData<User[]>(["users"]) || [];
+
+    // Duplicate checks
+    if (latestUsers.some((user) => user.id === form.id && user.id !== editId)) {
+      errors.id = "This ID is already in use";
+    }
+    if (latestUsers.some((user) => user.user_name === form.user_name && user.id !== editId)) {
+      errors.user_name = "This username is already in use";
+    }
+    if (latestUsers.some((user) => user.email === form.email && user.id !== editId)) {
+      errors.email = "This email is already in use";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
+    setFormErrors({});
+
     const userData = {
       ...form,
-      availability: form.availability
     };
 
     if (editId !== null) {
@@ -238,105 +266,31 @@ const UserManagement: React.FC = () => {
 
   const handleClear = () => {
     setForm({
-      epf: "",
-      employeeName: "",
-      username: "",
-      department: "",
-      contact: "",
+      id: "",
+      name: "",
       email: "",
-      userType: "",
-      availability: false,
-      password: ""
+      password: "",
+      user_role: null,
+      user_name: ""
     });
     setEditId(null);
   };
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     const userToEdit = (searchTerm ? (searchMode === "api" ? apiSearchResults : searchedData) : users).find(user => user.id === id);
     if (userToEdit) {
       setForm({
         ...userToEdit,
-        password: ""
       });
       setEditId(id);
       document.getElementById('user-form-section')?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const handleDeactivate = (id: number) => {
-    if (window.confirm("Are you sure you want to deactivate this user?")) {
+  const handleDeactivate = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
       deactivateUserMutation.mutate(id);
     }
-  };
-
-  const handleBulkDeactivate = () => {
-    if (rowSelectionModel.length === 0) {
-      showSnackbar("Please select users to deactivate", "error");
-      return;
-    }
-
-    if (window.confirm(`Are you sure you want to deactivate ${rowSelectionModel.length} selected users?`)) {
-      Promise.all(rowSelectionModel.map(id => deactivateUserMutation.mutateAsync(id as number)))
-        .then(() => {
-          showSnackbar(`${rowSelectionModel.length} users deactivated successfully!`, "success");
-          setRowSelectionModel([]);
-        })
-        .catch(() => {
-          showSnackbar("Error deactivating some users", "error");
-        });
-    }
-  };
-
-  const handlePrint = () => {
-    if (dataGridRef.current) {
-      dataGridRef.current.print();
-    }
-  };
-
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
-    const dataToExport = searchTerm ? 
-      (searchMode === "api" ? apiSearchResults : searchedData) : 
-      users;
-    
-    const tableData = dataToExport.map(user => [
-      user.epf,
-      user.employeeName,
-      user.username,
-      user.department,
-      user.contact,
-      user.email,
-      user.userType,
-      user.availability ? 'Available' : 'Unavailable'
-    ]);
-
-    doc.text('User Management Report', 14, 16);
-    autoTable(doc, {
-      head: [['EPF', 'Name', 'Username', 'Department', 'Contact', 'Email', 'User Type', 'Status']],
-      body: tableData,
-      startY: 20,
-      styles: {
-        cellPadding: 3,
-        fontSize: 10,
-        valign: 'middle',
-        halign: 'center',
-      },
-      headStyles: {
-        fillColor: [25, 118, 210],
-        textColor: 255,
-        fontStyle: 'bold'
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      }
-    });
-
-    doc.save('user-management-report.pdf');
-  };
-
-  const handleClearSearch = () => {
-    setSearchTerm("");
-    setSearchedData([]);
   };
 
   const isMutating = createUserMutation.isPending ||
@@ -344,106 +298,70 @@ const UserManagement: React.FC = () => {
     deactivateUserMutation.isPending;
 
   const columns: GridColDef<User>[] = [
-    { field: 'epf', headerName: 'EPF', width: 120, flex: 1 },
-    { field: 'employeeName', headerName: 'Employee Name', width: 180, flex: 1 },
-    { field: 'username', headerName: 'Username', width: 120, flex: 1 },
-    { field: 'department', headerName: 'Department', width: 120, flex: 1 },
-    { field: 'contact', headerName: 'Contact', width: 120, flex: 1 },
-    { field: 'email', headerName: 'Email', width: 200, flex: 1 },
-    { field: 'userType', headerName: 'User Type', width: 120, flex: 1 },
-    { 
-      field: 'availability', 
-      headerName: 'Status', 
-      width: 120,
-      flex: 1,
-      type: 'boolean',
+    { field: 'id', headerName: 'ID', width: 120, flex: 0.8 },
+    { field: 'name', headerName: 'Name', width: 180, flex: 0.8 },
+    { field: 'user_name', headerName: 'Username', width: 120, flex: 0.8 },
+    { field: 'contact', headerName: 'Contact', width: 120, flex: 0.8 },
+    { field: 'email', headerName: 'Email', width: 200, flex: 0.8 },
+    { field: 'user_role', headerName: 'User Role', width: 120, flex: 0.8 },
+    {
+      field: 'edit',
+      headerName: 'Edit',
+      width: 100,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
       renderCell: (params) => (
-        <Box
-          sx={{
-            color: params.value ? theme.palette.success.main : theme.palette.error.main,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}
-        >
-          <Box
+        <Box sx={{ display: 'flex', alignItems: 'stretch', height: '100%', width: '100%', p: 0 }}>
+          <Button
+            onClick={() => handleEdit(params.id as string)}
+            color="primary"
+            variant="contained"
             sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              bgcolor: params.value ? theme.palette.success.main : theme.palette.error.main
+              flex: 1,
+              height: '100%',
+              borderRadius: 0,
+              minWidth: 80,
+              padding: 0,
             }}
-          />
-          {params.value ? 'Available' : 'Unavailable'}
+          >
+            Edit
+          </Button>
         </Box>
-      )
+      ),
     },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      type: 'actions',
-      width: 120,
-      getActions: (params: GridRowParams) => [
-        <GridActionsCellItem
-          icon={<EditIcon />}
-          label="Edit"
-          onClick={() => handleEdit(params.id as number)}
-          showInMenu
-        />,
-        <GridActionsCellItem
-          icon={<DeleteIcon color="error" />}
-          label="Deactivate"
-          onClick={() => handleDeactivate(params.id as number)}
-          showInMenu
-        />,
-      ],
+      field: 'delete',
+      headerName: 'Delete',
+      width: 80,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      renderCell: (params) => (
+        <Box sx={{ display: 'flex', alignItems: 'stretch', height: '100%', width: '100%', p: 0 }}>
+          <Button
+            onClick={() => handleDeactivate(params.id as string)}
+            color="error"
+            size="small"
+            variant="contained"
+            sx={{
+              flex: 1,
+              height: '100%',
+              borderRadius: 0,
+
+            }}
+          >
+            Delete
+          </Button>
+        </Box>
+      ),
     },
+
   ];
 
-  function CustomToolbar() {
-    return (
-      <GridToolbarContainer sx={{ justifyContent: 'space-between' }}>
-        <Box>
-          <Tooltip title="Refresh data">
-            <IconButton onClick={() => refetch()}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Export PDF">
-            <IconButton onClick={handleExportPDF}>
-              <PdfIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Print">
-            <IconButton onClick={handlePrint}>
-              <PrintIcon />
-            </IconButton>
-          </Tooltip>
-          {rowSelectionModel.length > 0 && (
-            <Button
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={handleBulkDeactivate}
-              size="small"
-              sx={{ ml: 1 }}
-            >
-              Deactivate Selected
-            </Button>
-          )}
-        </Box>
-        <Box>
-          <GridToolbarColumnsButton />
-          <GridToolbarFilterButton />
-          <GridToolbarDensitySelector />
-          <GridToolbarExport />
-        </Box>
-      </GridToolbarContainer>
-    );
-  }
-
   // Determine which data to display
-  const displayData = searchTerm ? 
-    (searchMode === "api" ? apiSearchResults : searchedData) : 
+  const displayData = searchTerm ?
+    (searchMode === "api" ? apiSearchResults : searchedData) :
     users;
 
   return (
@@ -469,69 +387,54 @@ const UserManagement: React.FC = () => {
           />
         </AppBar>
 
-        <Stack spacing={3} sx={{ p: 3, overflow: 'auto' }}>
-          <Paper id="user-form-section" sx={{ p: 3, borderRadius: 2 }}>
-            <Typography variant="h6" sx={{ mb: 3, color: theme.palette.primary.main }}>
+        <Stack spacing={0.2} sx={{
+          p: 2, overflow: 'auto', maxWidth: '1300px', margin: '0 auto', width: '90%'
+        }}>
+          <Paper id="user-form-section" sx={{ p: 2, borderRadius: "8px 8px 0 0" }}>
+            <Typography variant="h6" sx={{ mb: 2, color: theme.palette.primary.main }}>
               {editId !== null ? "Edit User" : "Create New User"}
             </Typography>
 
-            <Stack spacing={2}>
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
                 <TextField
-                  label="EPF*"
-                  name="epf"
-                  value={form.epf}
+                  label="ID*"
+                  name="id"
+                  value={form.id ?? ""}
                   onChange={handleChange}
+                  error={!!formErrors.id}
+                  helperText={formErrors.id}
                   sx={{ flex: '1 1 calc(9.09% - 16px)' }}
                   size="small"
                 />
                 <TextField
-                  label="Employee Name*"
-                  name="employeeName"
-                  value={form.employeeName}
+                  label="Name*"
+                  name="name"
+                  value={form.name}
                   onChange={handleChange}
+                  error={!!formErrors.name}
+                  helperText={formErrors.name}
                   sx={{ flex: '1 1 calc(9.09% - 16px)' }}
                   size="small"
                 />
                 <TextField
                   label="Username*"
-                  name="username"
-                  value={form.username}
+                  name="user_name"
+                  value={form.user_name}
                   onChange={handleChange}
+                  error={!!formErrors.user_name}
+                  helperText={formErrors.user_name}
                   sx={{ flex: '1 1 calc(9.09% - 16px)' }}
                   size="small"
                 />
-                {editId === null && (
-                  <TextField
-                    label="Password*"
-                    name="password"
-                    type="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    sx={{ flex: '1 1 calc(9.09% - 16px)' }}
-                    size="small"
-                  />
-                )}
                 <TextField
-                  select
-                  label="Department"
-                  name="department"
-                  value={form.department}
-                  onChange={(e) => handleSelectChange(e, "department")}
-                  sx={{ flex: '1 1 calc(9.09% - 16px)' }}
-                  size="small"
-                >
-                  {departments.map((dept) => (
-                    <MenuItem key={dept} value={dept}>
-                      {dept}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  label="Contact"
-                  name="contact"
-                  value={form.contact}
+                  label="Password*"
+                  name="password"
+                  type="password"
+                  value={form.password}
                   onChange={handleChange}
+                  error={!!formErrors.password}
+                  helperText={formErrors.password}
                   sx={{ flex: '1 1 calc(9.09% - 16px)' }}
                   size="small"
                 />
@@ -540,36 +443,23 @@ const UserManagement: React.FC = () => {
                   name="email"
                   value={form.email}
                   onChange={handleChange}
+                  error={!!formErrors.email}
+                  helperText={formErrors.email}
                   sx={{ flex: '1 1 calc(9.09% - 16px)' }}
                   size="small"
                 />
                 <TextField
                   select
-                  label="User Type"
-                  name="userType"
-                  value={form.userType}
-                  onChange={(e) => handleSelectChange(e, "userType")}
-                  sx={{ flex: '1 1 calc(9.09% - 16px)' }}
+                  label="User Role"
+                  name="user_role"
+                  value={form.user_role ?? ""}
+                  onChange={(e) => handleSelectChange(e, "user_role")}
+                  sx={{ flex: '1 1 calc(20% - 16px)' }}
                   size="small"
                 >
-                  {userTypes.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  select
-                  label="Availability"
-                  name="availability"
-                  value={form.availability.toString()}
-                  onChange={(e) => handleSelectChange(e, "availability")}
-                  sx={{ flex: '1 1 calc(9.09% - 16px)' }}
-                  size="small"
-                >
-                  {availabilityOptions.map((option) => (
-                    <MenuItem key={option.label} value={option.value.toString()}>
-                      {option.label}
+                  {userRoles.map((role) => (
+                    <MenuItem key={role} value={role}>
+                      {role}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -580,16 +470,22 @@ const UserManagement: React.FC = () => {
                   variant="contained"
                   onClick={handleSave}
                   disabled={isMutating}
-                  startIcon={isMutating ? <CircularProgress size={20} /> : null}
-                  sx={{ minWidth: 150 }}
+                  sx={{ minWidth: 100 }}
                 >
-                  {editId !== null ? "Update User" : "Create User"}
+                  {editId !== null ? "Update" : "Save"}
                 </Button>
                 <Button
                   variant="outlined"
                   onClick={handleClear}
                   disabled={isMutating}
-                  sx={{ minWidth: 100 }}
+                  sx={{
+                    minWidth: 100,
+                    color: 'text.primary',
+                    backgroundColor: 'warning.light',
+                    '&:hover': {
+                      backgroundColor: 'warning.main',
+                    }
+                  }}
                 >
                   Clear
                 </Button>
@@ -597,83 +493,20 @@ const UserManagement: React.FC = () => {
             </Stack>
           </Paper>
 
-          <Paper sx={{ p: 2, borderRadius: 2, height: 720 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              mb: 2 
+          <Paper sx={{ p: 2, borderRadius: "0 0 8px 8px", height: 720 }}>
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2
             }}>
-              <Typography variant="h6" sx={{ color: theme.palette.primary.main }}>
-                User List
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <TextField
-                  placeholder="Search users..."
-                  variant="outlined"
-                  size="small"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ 
-                    width: 300,
-                    '& .MuiOutlinedInput-root': {
-                      pr: 1,
-                    },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="action" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: searchTerm && (
-                      <IconButton
-                        size="small"
-                        onClick={handleClearSearch}
-                        sx={{ visibility: searchTerm ? 'visible' : 'hidden' }}
-                      >
-                        <ClearIcon fontSize="small" />
-                      </IconButton>
-                    ),
-                  }}
-                />
-              </Box>
+
             </Box>
-            <DataGrid
-              rows={displayData}
-              columns={columns}
+            <UserManagementTable
+              users={displayData}
+              handleEdit={handleEdit}
+              handleDelete={handleDeactivate}
               loading={Boolean(isDataLoading || isMutating || (searchTerm && searchMode === "api" && isSearching))}
-              slots={{ toolbar: CustomToolbar }}
-              slotProps={{
-                toolbar: {
-                  showQuickFilter: true,
-                },
-              }}
-              checkboxSelection
-              disableRowSelectionOnClick
-              rowSelectionModel={rowSelectionModel}
-              onRowSelectionModelChange={(newSelection) => setRowSelectionModel([...newSelection])}
-              pageSizeOptions={[5, 10, 25, 50, 100]}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 10, page: 0 },
-                },
-              }}
-              sx={{
-                border: 'none',
-                '& .MuiDataGrid-cell': {
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: theme.palette.background.paper,
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                },
-                '& .MuiDataGrid-toolbarContainer': {
-                  padding: theme.spacing(1),
-                  borderBottom: `1px solid ${theme.palette.divider}`,
-                },
-              }}
-              ref={dataGridRef}
             />
           </Paper>
         </Stack>

@@ -3,50 +3,76 @@ import { User } from "../types/userManagementTypes";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+// export const fetchUsers = async (): Promise<User[]> => {
+//   const response = await axios.get(`${API_BASE_URL}/api/users`, {
+//     headers: {
+//       Authorization: `Bearer ${localStorage.getItem('authToken')}`
+//     }
+//   });
+//   return response.data.data || response.data;
+// };
+
+// export const createUser = async (userData: User): Promise<User> => {
+//   const response = await axios.post(`${API_BASE_URL}/api/user-create`, userData, {
+//     headers: {
+//       Authorization: `Bearer ${localStorage.getItem('authToken')}`
+//     }
+//   });
+//   return response.data;
+// };
+
+// export const updateUser = async (id: number, userData: User): Promise<User> => {
+//   const response = await axios.post(`${API_BASE_URL}/api/user/${id}/update`, userData, {
+//     headers: {
+//       Authorization: `Bearer ${localStorage.getItem('authToken')}`
+//     }
+//   });
+//   return response.data;
+// };
+
+// export const deactivateUser = async (id: number): Promise<void> => {
+//   await axios.post(`${API_BASE_URL}/api/user/${id}/availability-update`, {}, {
+//     headers: {
+//       Authorization: `Bearer ${localStorage.getItem('authToken')}`
+//     }
+//   });
+// };
+
+// export const searchUsers = async (searchTerm: string): Promise<User[]> => {
+//   const response = await axios.post(
+//     `${API_BASE_URL}/api/user/search`,
+//     { keyword: searchTerm },
+//     {
+//       headers: {
+//         Authorization: `Bearer ${localStorage.getItem('authToken')}`
+//       }
+//     }
+//   );
+//   return response.data.data || response.data;
+// };
+
 export const fetchUsers = async (): Promise<User[]> => {
-  const response = await axios.get(`${API_BASE_URL}/api/all-users`, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('authToken')}`
-    }
-  });
-  return response.data.data || response.data;
+  const response = await axios.get(`${API_BASE_URL}/users`); // Changed to /users
+  return response.data || [];
 };
 
 export const createUser = async (userData: User): Promise<User> => {
-  const response = await axios.post(`${API_BASE_URL}/api/user-create`, userData, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('authToken')}`
-    }
-  });
+  const response = await axios.post(`${API_BASE_URL}/users`, userData);
   return response.data;
 };
 
-export const updateUser = async (id: number, userData: User): Promise<User> => {
-  const response = await axios.post(`${API_BASE_URL}/api/user/${id}/update`, userData, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('authToken')}`
-    }
-  });
+export const updateUser = async (id: string, userData: User): Promise<User> => {
+  const response = await axios.put(`${API_BASE_URL}/users/${id}`, userData); // Use PUT for json-server
   return response.data;
 };
 
-export const deactivateUser = async (id: number): Promise<void> => {
-  await axios.post(`${API_BASE_URL}/api/user/${id}/availability-update`, {}, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('authToken')}`
-    }
-  });
+export const deactivateUser = async (id: string): Promise<void> => {
+  const response = await axios.delete(`${API_BASE_URL}/users/${id}`); // Use PATCH for partial update
+  return response.data;
 };
 
 export const searchUsers = async (searchTerm: string): Promise<User[]> => {
-  const response = await axios.post(
-    `${API_BASE_URL}/api/user/search`,
-    { keyword: searchTerm },
-    {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('authToken')}`
-      }
-    }
-  );
-  return response.data.data || response.data;
+  const response = await axios.get(`${API_BASE_URL}/users?q=${searchTerm}`); // json-server search syntax
+  return response.data || [];
 };
+

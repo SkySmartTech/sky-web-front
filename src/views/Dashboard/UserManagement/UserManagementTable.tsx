@@ -8,24 +8,23 @@ import {
   TableRow,
   TableCell,
   Paper,
-  IconButton,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Button
 } from "@mui/material";
-import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { User } from "../../../types/userManagementTypes";
 interface UserManagementTableProps {
   users: User[];
-  handleEdit: (id: number) => void;
-  handleDelete: (id: number) => void;
+  handleEdit: (id: string) => void;
+  handleDelete: (id: string) => void;
   loading: boolean;
 }
 
-const UserManagementTable: React.FC<UserManagementTableProps> = ({ 
-  users, 
-  handleEdit, 
+const UserManagementTable: React.FC<UserManagementTableProps> = ({
+  users,
+  handleEdit,
   handleDelete,
-  loading 
+  loading
 }) => {
   return (
     <>
@@ -34,26 +33,39 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({
       </Typography>
       <TableContainer component={Paper}>
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+            <CircularProgress size={20} />
           </Box>
         ) : (
-          <Table>
-            <TableHead>
+          <Table
+            sx={(theme) => ({
+              borderCollapse: 'collapse',
+              '& td, & th': {
+                border: `1px solid ${theme.palette.divider}`,
+                textAlign: 'center', 
+                verticalAlign: 'middle',
+              }
+            })}>
+            <TableHead >
               <TableRow>
                 {[
                   "ID",
-                  "EPF",
-                  "Employee Name",
+                  "Name",
                   "Username",
-                  "Department",
-                  "Contact",
                   "Email",
-                  "User Type",
-                  "Availability",
-                  "Actions"
+                  "User Role",
+                  "Password",
+                  "Edit",
+                  "Delete"
                 ].map((header) => (
-                  <TableCell key={header} sx={{ fontWeight: "bold" }}>
+                  <TableCell key={header}
+                    sx={(theme) => ({
+                      fontWeight: 'bold',
+                      backgroundColor: theme.palette.background.default, // use theme paper color
+                      color: theme.palette.text.primary,
+                      border: `1px solid ${theme.palette.divider}`,
+                    })}
+                    align="center" >
                     {header}
                   </TableCell>
                 ))}
@@ -64,21 +76,42 @@ const UserManagementTable: React.FC<UserManagementTableProps> = ({
                 users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>{user.id}</TableCell>
-                    <TableCell>{user.epf}</TableCell>
-                    <TableCell>{user.employeeName}</TableCell>
-                    <TableCell>{user.username}</TableCell>
-                    <TableCell>{user.department}</TableCell>
-                    <TableCell>{user.contact}</TableCell>
+                    <TableCell>{user.name}</TableCell>
+                    <TableCell>{user.user_name}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.userType}</TableCell>
-                    <TableCell>{user.availability ? "Available" : "Unavailable"}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleEdit(user.id!)} color="primary">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(user.id!)} color="error">
-                        <DeleteIcon />
-                      </IconButton>
+                    <TableCell>{user.user_role}</TableCell>
+                    <TableCell>{user.password ? "********" : ""}</TableCell>
+                    <TableCell sx={{ p: 0, backgroundColor: (theme) => theme.palette.warning.light }}>
+                      <Button
+                        onClick={() => handleEdit(user.id!)}
+                        variant="text"
+                        sx={{
+                          flex: 1,
+                          height: '100%',
+                          width: '100%',
+                          borderRadius: 0,
+                          minWidth: 80,
+                          color: (theme) => theme.palette.warning.contrastText,
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </TableCell>
+                    <TableCell sx={{ p: 0, backgroundColor: (theme) => theme.palette.error.main }}>
+                      <Button
+                        onClick={() => handleDelete(user.id!)}
+                        variant="text"
+                        sx={{
+                          height: "100%",
+                          width: "100%",
+                          borderRadius: 0,
+                          minWidth: 50,
+                          color: (theme) => theme.palette.warning.contrastText,
+                          padding: "2px",
+                        }}
+                      >
+                        Delete
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
