@@ -1,0 +1,60 @@
+{
+  "users": [
+    {
+      "id": "3",
+      "name": "sl123",
+      "email": "me@mail.com",
+      "password": "Ax@2fdsdjfnj5",
+      "user_role": "User",
+      "user_name": "m3123"
+    },
+    {
+      "id": "4",
+      "name": "user4",
+      "email": "user$@mail.com",
+      "password": "dsfdAw@2324",
+      "user_role": "Admin",
+      "user_name": "user4"
+    },
+    {
+      "id": "5",
+      "name": "user5",
+      "email": "user5@mail.com",
+      "password": "aA@2dsdsjdffd5854",
+      "user_role": "User",
+      "user_name": "user5"
+    },
+    {
+      "id": "6",
+      "name": "user6",
+      "email": "user6@mail.com",
+      "password": "mMnd%5223232sdjfdf",
+      "user_role": "Super Admin",
+      "user_name": "user6"
+    },
+    {
+      "id": "7",
+      "name": "user7",
+      "email": "user7@mail.com",
+      "password": "asSd%5434gg",
+      "user_role": "Admin",
+      "user_name": "user7"
+    },
+    {
+      "id": "8",
+      "name": "user8",
+      "email": "user8@mail.com",
+      "password": "1!Aa5t6h8",
+      "user_role": "Super Admin",
+      "user_name": "user8"
+    },
+    {
+      "id": "9",
+      "name": "user9",
+      "email": "user9@mail.com",
+      "password": "a&6Gd4ngvhd",
+      "user_role": "Admin",
+      "user_name": "user9"
+    }
+  ]
+}

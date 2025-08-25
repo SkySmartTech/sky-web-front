@@ -24,6 +24,8 @@ const DayPlanSummary = React.lazy(() => import("./views/Dashboard/DayPlanSummary
 // Administration pages
 const UserManagement = React.lazy(() => import("./views/Dashboard/UserManagement/UserManagement"));
 
+const EmployeeManagement = React.lazy(() => import("./views/Dashboard/EmployeeManagement/EmployeeManagement"));
+
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useCurrentUser();
 
@@ -78,7 +80,7 @@ function AppRoutes() {
         <Route path="/daySummary" element={<DayPlanSummary />} />
         <Route path="/userManagement" element={<UserManagement />} />
         <Route path="/userAccessManagement" element={<UserAccessManagement/>} />
-
+        <Route path="/employeeManagement" element={<EmployeeManagement/>} />
       </Route>
 
       {/* Protected routes */}
